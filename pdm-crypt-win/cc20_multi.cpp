@@ -97,7 +97,7 @@ void p_hex<uint8_t>(uint8_t i) {
 // Print a chacha state
 template <typename NT>
 void p_state(NT* state) {
-    for (i = 0; i < 16; i++) {
+    for (unsigned int i = 0; i < 16; i++) {
         p_hex(state[i]);
         if ((i + 1) % 4 == 0)cout << "\n";
     }
@@ -173,7 +173,7 @@ using namespace std;
 
 
 void multi_enc_pthrd(int thrd);
-void set_thread_arg(int thrd, long int np, long int tracker, long int n, long int tn, uint8_t* line, uint32_t count, Cc20* ptr);
+void set_thread_arg(int thrd, long long int np, long long int tracker, long long int n, long long int tn, uint8_t* line, uint32_t count, Cc20* ptr);
 
 
 // string hashing = "00000000000000000000000000000000"; // A rolling hash of the the input data.
@@ -192,11 +192,11 @@ uint32_t folow[THREAD_COUNT][17]; // A copy of a state.
 // Statically allocates, and uses BLOCK_SIZE*THREAD_COUNT of memory. 
 char thread_track[THREAD_COUNT][BLOCK_SIZE] = { {0} };
 
-long int writing_track[THREAD_COUNT]; // Tells the writer thread how much to read; should only be different on the last block.
+long long int writing_track[THREAD_COUNT]; // Tells the writer thread how much to read; should only be different on the last block.
 
 char* linew;
 
-long int arg_track[THREAD_COUNT][6];
+long long int arg_track[THREAD_COUNT][6];
 /* Passes arguments into threads.
                                        arg_track[THREAD_COUNT][0] ---> Thread number
                                        arg_track[THREAD_COUNT][1] ---> NOT USED
@@ -220,7 +220,7 @@ char** outthreads;
 
 int final_line_written = 0; // Whether or not the fianl line is written
 #define FILE_MAP_START 0
-long int  BUFFSIZE = THREAD_COUNT * BLOCK_SIZE;
+long long int  BUFFSIZE = THREAD_COUNT * BLOCK_SIZE;
 // mutex mtx;
 
 /*
@@ -262,22 +262,22 @@ void Cc20::one_block(int thrd, uint32_t count) {
 
 */
 
-void Cc20::encr(uint8_t* line, uint8_t* linew, unsigned long int fsize) {
+void Cc20::encr(uint8_t* line, uint8_t* linew, unsigned long long int fsize) {
 
-    unsigned long int n = fsize;
+    unsigned long long int n = fsize;
 
-    long int tn = 0;
+    long long int tn = 0;
     uint32_t count = 0;
-    for (long int i = 0; i < THREAD_COUNT; i++) {
+    for (long long int i = 0; i < THREAD_COUNT; i++) {
         writing_track[i] = 0;
     }
-    long int tracker = 0;
-    long int np = 0, tmpn = np % THREAD_COUNT;
-    set_thread_arg(np % THREAD_COUNT, (long int)linew, tracker, n, 0, line, count, this);
+    long long int tracker = 0;
+    long long int np = 0, tmpn = np % THREAD_COUNT;
+    set_thread_arg(np % THREAD_COUNT, (long long int)linew, tracker, n, 0, line, count, this);
     threads[np % THREAD_COUNT] = thread(multi_enc_pthrd, tmpn);
     np++;
 
-    for (unsigned long int k = 0; k < ((unsigned long int)(fsize / 64) + 1); k++) { // If leak, try add -1
+    for (unsigned long long int k = 0; k < ((unsigned long long int)(fsize / 64) + 1); k++) { // If leak, try add -1
 
         if (n >= 64) {
             tracker += 64;
@@ -288,7 +288,7 @@ void Cc20::encr(uint8_t* line, uint8_t* linew, unsigned long int fsize) {
                     #endif
                     threads[np % THREAD_COUNT].join();
                 }
-                set_thread_arg(np % THREAD_COUNT, (long int)linew + tn, tracker, n, tn, line + tn, count + 1, this);
+                set_thread_arg(np % THREAD_COUNT, (long long int)linew + tn, tracker, n, tn, line + tn, count + 1, this);
                 threads[np % THREAD_COUNT] = thread(multi_enc_pthrd, np % THREAD_COUNT);
 
                 tracker = 0;
@@ -302,7 +302,7 @@ void Cc20::encr(uint8_t* line, uint8_t* linew, unsigned long int fsize) {
                 #endif
                 threads[np % THREAD_COUNT].join();
             }
-            set_thread_arg(np % THREAD_COUNT, (long int)linew + tn, tracker, n, tn, line + tn, count + 1, this);
+            set_thread_arg(np % THREAD_COUNT, (long long int)linew + tn, tracker, n, tn, line + tn, count + 1, this);
             threads[np % THREAD_COUNT] = thread(multi_enc_pthrd, np % THREAD_COUNT);
         }
         count += 1;
@@ -339,10 +339,10 @@ void Cc20::encr(uint8_t* line, uint8_t* linew, unsigned long int fsize) {
 
 void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
     std::vector < uint8_t > content;
-    unsigned long int n = 0;
+    unsigned long long int n = 0;
 
     struct stat sb;
-    long int fd;
+    long long int fd;
     uint8_t* data;
     uint8_t* line;
 
@@ -358,7 +358,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
     DWORD dwFileSize;     // temporary storage for file sizes
     DWORD dwFileMapSize;  // size of the file mapping
     DWORD dwMapViewSize;  // the size of the view
-    DWORD dwFileMapStart; // where to start the file map view
+    DWORD dwFileMapStart=0; // where to start the file map view
     DWORD dwSysGran;      // system allocation granularity
     SYSTEM_INFO SysInfo;  // system information; used to get granularity
     LPVOID lpMapAddress;  // pointer to the base address of the
@@ -368,12 +368,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
                       //shows up
 
     hFile = CreateFile(lpcTheFile,
-        GENERIC_READ,
-        0,
-        NULL,
-        OPEN_EXISTING,
-        0,
-        NULL);
+         GENERIC_WRITE | GENERIC_READ, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
     if (hFile == INVALID_HANDLE_VALUE)
     {
@@ -408,7 +403,6 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
         0,              // size of mapping object, high
         dwFileMapSize,  // size of mapping object, low
         NULL);          // name of mapping object
-
     if (hMapFile == NULL)
     {
         _tprintf(TEXT("hMapFile is NULL: last error: %d\n"), GetLastError());
@@ -439,25 +433,28 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
 
     line = data;
     linew = new char[n];
-    long int tn = 0;
+    long long int tn = 0;
     unsigned int ttn = n;
     uint32_t count = 0;
-    for (long int i = 0; i < THREAD_COUNT; i++) {
+    for (long long int i = 0; i < THREAD_COUNT; i++) {
         writing_track[i] = 0;
     }
-    long int tracker = 0;
-    long int np = 0, tmpn = np % THREAD_COUNT;
+    long long int tracker = 0;
+    long long int np = 0, tmpn = np % THREAD_COUNT;
 
     #ifdef DE
     ttn -= 12;
     line = line + 12;
     #endif
 
-    set_thread_arg(np % THREAD_COUNT, (long int)linew, tracker, n, 0, line, count, this);
+    _tprintf(TEXT("View 2 #%d#\n"), n);
+
+
+    set_thread_arg(np % THREAD_COUNT, (long long int)linew, tracker, n, 0, line, count, this);
     threads[np % THREAD_COUNT] = thread(multi_enc_pthrd, tmpn);
     np++;
 
-    for (unsigned long int k = 0; k < ((unsigned long int)(ttn / 64) + 1); k++) { // If leak, try add -1
+    for (unsigned long long int k = 0; k < ((unsigned long long int)(ttn / 64) + 1); k++) { // If leak, try add -1
 
         if (n >= 64) {
             tracker += 64;
@@ -468,7 +465,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
                     #endif
                     threads[np % THREAD_COUNT].join();
                 }
-                set_thread_arg(np % THREAD_COUNT, (long int)linew + tn, tracker, n, tn, line + tn, count + 1, this);
+                set_thread_arg(np % THREAD_COUNT, (long long int)linew + tn, tracker, n, tn, line + tn, count + 1, this);
                 threads[np % THREAD_COUNT] = thread(multi_enc_pthrd, np % THREAD_COUNT);
 
                 tracker = 0;
@@ -482,7 +479,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
                 #endif
                 threads[np % THREAD_COUNT].join();
             }
-            set_thread_arg(np % THREAD_COUNT, (long int)linew + tn, tracker, n, tn, line + tn, count + 1, this);
+            set_thread_arg(np % THREAD_COUNT, (long long int)linew + tn, tracker, n, tn, line + tn, count + 1, this);
             threads[np % THREAD_COUNT] = thread(multi_enc_pthrd, np % THREAD_COUNT);
         }
         count += 1;
@@ -572,7 +569,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
 
 */
 
-void set_thread_arg(int thrd, long int linew1, long int tracker, long int n, long int tn, uint8_t* line, uint32_t count, Cc20* ptr) {
+void set_thread_arg(int thrd, long long int linew1, long long int tracker, long long int n, long long int tn, uint8_t* line, uint32_t count, Cc20* ptr) {
     arg_track[thrd][0] = thrd;
     arg_track[thrd][1] = linew1;
     arg_track[thrd][2] = tracker;
@@ -585,8 +582,8 @@ void set_thread_arg(int thrd, long int linew1, long int tracker, long int n, lon
 
 void multi_enc_pthrd(int thrd) {
     uint8_t* linew1 = (uint8_t*)arg_track[thrd][1]; // Set but not used
-    long int tracker = 0; // Used
-    long int n = arg_track[thrd][3]; // Used 
+    long long int tracker = 0; // Used
+    long long int n = arg_track[thrd][3]; // Used 
     uint8_t* line = arg_line[thrd]; // Used
     uint32_t count = arg_count[thrd]; // Used 
     Cc20* ptr = arg_ptr[thrd];
@@ -594,15 +591,19 @@ void multi_enc_pthrd(int thrd) {
     #ifdef VERBOSE
     cout << "[calc] " << thrd << " locks, starting write " << endl;
     #endif
-    for (unsigned long int k = 0; k < BLOCK_SIZE / 64; k++) {
+    for (unsigned long long int k = 0; k < BLOCK_SIZE / 64; k++) {
         ptr->one_block((int)thrd, (int)count);
-
+        #ifdef VERBOSE
+        cout << "[calc] " << thrd << " had iteration, current size " << n << endl;
+        #endif
         if (n >= 64) {
-            for (long int i = 0; i < 64; i++) {
+            for (long long int i = 0; i < 64; i++) {
                 linew1[i + tracker] = (char)(line[i + tracker] ^ ptr->nex[thrd][i]);
             }
 
             tracker += 64;
+
+            
             if (tracker >= (BLOCK_SIZE)) { // Notifies the writing tread when data can be read
                 
                 writing_track[thrd] = tracker;
@@ -689,7 +690,7 @@ void cmd_enc(string infile_name, string oufile_name, string text_nonce) {
     DWORD mode = 0;
     GetConsoleMode(hStdin, &mode);
     SetConsoleMode(hStdin, mode & (~ENABLE_ECHO_INPUT));
-    cout << "Password/密码： " << endl;
+    cout << "Password of the file： " << endl;
     std::getline(std::cin, text_key);
     #endif
 
@@ -754,6 +755,8 @@ int main_c(int argc, char** argv) {
     init_byte_rand_cc20(cur, 12);
     nonce = "1";
     cmd_enc(infile, "", btos(cur));
+    _tprintf(TEXT("init rand output #%s#\n"), btos(cur));
+    //cmd_enc("test.pdf", "", btos(cur));
     return 0;
 }
 

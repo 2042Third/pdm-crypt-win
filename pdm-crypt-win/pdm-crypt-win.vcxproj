@@ -110,6 +110,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='encrypt|x64'">
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -175,7 +178,13 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='encrypt|x64'">
     <ClCompile>
-      <AdditionalOptions>-D WINDOWS -D DEEP_DEBUG %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-D WINDOWS -D DEEP_DEBUG -pthread -std=c++17 -m64 %(AdditionalOptions)</AdditionalOptions>
+      <WarningLevel>Level3</WarningLevel>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <ControlFlowGuard>false</ControlFlowGuard>
+      <CallingConvention>StdCall</CallingConvention>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
