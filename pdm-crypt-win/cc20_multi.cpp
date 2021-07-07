@@ -171,6 +171,7 @@ author:     Yi Yang
 using namespace std;
 // using boost::thread;
 
+int ENABLE_SHA3_OUTPUT = 1; // Enables sha3 output
 
 void multi_enc_pthrd(int thrd);
 void set_thread_arg(int thrd, long long int np, long long int tracker, long long int n, long long int tn, uint8_t* line, uint32_t count, Cc20* ptr);
@@ -322,13 +323,14 @@ void Cc20::encr(uint8_t* line, uint8_t* linew, unsigned long long int fsize) {
 
         }
     }
-    /**
-    #ifndef DE
-    hashing.add(line, fsize);
-    #else 
-    hashing.add(linew, fsize);
-    #endif // DE
-    */
+    if(ENABLE_SHA3_OUTPUT)
+    {
+        #ifndef DE
+        hashing.add(line, fsize);
+        #else 
+        hashing.add(linew, fsize);
+        #endif // DE
+    }
 
 }   
 
@@ -502,13 +504,14 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
 
         }
     }
-    /**
-    #ifndef DE
-    hashing.add(line, ttn);
-    #else 
-    hashing.add(linew, ttn);
-    #endif // DE
-    */
+    if(ENABLE_SHA3_OUTPUT)
+    {
+        #ifndef DE
+        hashing.add(line, ttn);
+        #else 
+        hashing.add(linew, ttn);
+        #endif // DE
+    }
     errno_t err;
     FILE* oufile;
     err = fopen_s(&oufile,oufile_name.data(), "wb");
@@ -644,16 +647,10 @@ void Cc20::set_vals(uint8_t* nonce, uint8_t* key) {
     copy(nonce, nonce + 12, this->nonce_orig);
     this->count = 0;
     for (unsigned int i = 0; i < THREAD_COUNT; i++) {
-        // this -> cy[i][0] = 0x617178e5;
-        // this -> cy[i][1] = 0xb72c676e;
-        // this -> cy[i][2] = 0x79e2ad32;
-        // this -> cy[i][3] = 0x6b246574;
-
         this->cy[i][0] = 0x61707865;
         this->cy[i][1] = 0x3320646e;
         this->cy[i][2] = 0x79622d32;
         this->cy[i][3] = 0x6b206574;
-
         expan(this->cy[i], 13, this->nonce, 3);
         expan(this->cy[i], 4, key, 8);
     }
@@ -727,11 +724,11 @@ void cmd_enc(string infile_name, string oufile_name, string text_nonce) {
 
     #ifdef DE
     cry_obj.rd_file_encr(infile_name_copy, "dec-" + infile_name);
-    //cout << "SHA3: \"" << hashing.getHash() << "\"" << endl;
+    if (ENABLE_SHA3_OUTPUT) cout << "SHA3: \"" << hashing.getHash() << "\"" << endl;
 
     #else
     cry_obj.rd_file_encr(infile_name, infile_name + ".pdm");
-    //cout << "SHA3: \"" << hashing.getHash() << "\"" << endl;
+    if (ENABLE_SHA3_OUTPUT) cout << "SHA3: \"" << hashing.getHash() << "\"" << endl;
     #endif //END DE
     auto end = std::chrono::high_resolution_clock::now();
     auto dur = end - start;
@@ -749,19 +746,40 @@ string convertToString(char* a, int size)
     }
     return s;
 }
+
+int rd_inp(unsigned int argc, char** argv, string* infile) {
+    int arg_c = 1;
+    for (unsigned int i = 1; i < argc; i++) {
+        if (argv[i][0] == '-') {
+            if (argv[i][1] == 's') {
+                ENABLE_SHA3_OUTPUT = 0;
+            }
+        }
+        else {
+            if (infile->empty()) {
+                arg_c++;
+                *infile = argv[i];
+            }
+            else
+                return 0;
+        }
+    }
+    if (!ENABLE_SHA3_OUTPUT)
+        cout << "sha3 output disabled" << endl;
+    return arg_c;
+}
+
+
 int main_c(int argc, char** argv) {
-    if (argc != 2) {
+    std::string infile, oufile, nonce;
+    if (rd_inp(argc,argv,&infile) != 2) {
         std::cout << argc << " Wrong input; Should have 1 input!\n" << std::endl;
         return 0;
     }
-    std::string infile, oufile, nonce;
-    infile = argv[1];
     Bytes cur;
     init_byte_rand_cc20(cur, 12);
     nonce = "1";
     cmd_enc(infile, "", btos(cur));
-    _tprintf(TEXT("init rand output #%s#\n"), btos(cur));
-    //cmd_enc("test.pdf", "", btos(cur));
     return 0;
 }
 

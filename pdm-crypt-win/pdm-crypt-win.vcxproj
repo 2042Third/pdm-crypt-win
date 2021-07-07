@@ -173,7 +173,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='decrypt|x64'">
     <ClCompile>
-      <AdditionalOptions>-D WINDOWS -D DE -D DEEP_DEBUG %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-D WINDOWS -D DEEP_DEBUG -pthread -std=c++17 -m64  -D DE %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='encrypt|x64'">
