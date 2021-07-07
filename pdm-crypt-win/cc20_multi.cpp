@@ -322,12 +322,15 @@ void Cc20::encr(uint8_t* line, uint8_t* linew, unsigned long long int fsize) {
 
         }
     }
+    /**
     #ifndef DE
     hashing.add(line, fsize);
     #else 
     hashing.add(linew, fsize);
     #endif // DE
-}
+    */
+
+}   
 
 /*
     Creates one thread for writing and THREAD_COUNT threads for calculating the
@@ -380,8 +383,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
     GetSystemInfo(&SysInfo);
     dwSysGran = SysInfo.dwAllocationGranularity;
 
-    if (BUFFSIZE > GetFileSize(hFile, NULL))
-        BUFFSIZE = GetFileSize(hFile, NULL);
+    BUFFSIZE = GetFileSize(hFile, NULL);
 
 
 
@@ -433,8 +435,9 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
 
     line = data;
     linew = new char[n];
+    _tprintf(TEXT("Able to create buffer of size %lld\n"),n);
     long long int tn = 0;
-    unsigned int ttn = n;
+    unsigned long long int ttn = n;
     uint32_t count = 0;
     for (long long int i = 0; i < THREAD_COUNT; i++) {
         writing_track[i] = 0;
@@ -499,11 +502,13 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
 
         }
     }
+    /**
     #ifndef DE
     hashing.add(line, ttn);
     #else 
     hashing.add(linew, ttn);
     #endif // DE
+    */
     errno_t err;
     FILE* oufile;
     err = fopen_s(&oufile,oufile_name.data(), "wb");
@@ -722,11 +727,11 @@ void cmd_enc(string infile_name, string oufile_name, string text_nonce) {
 
     #ifdef DE
     cry_obj.rd_file_encr(infile_name_copy, "dec-" + infile_name);
-    cout << "SHA3: \"" << hashing.getHash() << "\"" << endl;
+    //cout << "SHA3: \"" << hashing.getHash() << "\"" << endl;
 
     #else
     cry_obj.rd_file_encr(infile_name, infile_name + ".pdm");
-    cout << "SHA3: \"" << hashing.getHash() << "\"" << endl;
+    //cout << "SHA3: \"" << hashing.getHash() << "\"" << endl;
     #endif //END DE
     auto end = std::chrono::high_resolution_clock::now();
     auto dur = end - start;
