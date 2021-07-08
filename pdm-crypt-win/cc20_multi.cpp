@@ -194,6 +194,7 @@ uint32_t folow[THREAD_COUNT][17]; // A copy of a state.
 char thread_track[THREAD_COUNT][BLOCK_SIZE] = { {0} };
 
 int progress_bar[THREAD_COUNT];
+int DISPLAY_PROG = 1;
 
 long long int writing_track[THREAD_COUNT]; // Tells the writer thread how much to read; should only be different on the last block.
 
@@ -453,11 +454,14 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
     ttn -= 12;
     line = line + 12;
     #endif
-    for (unsigned int i = 0; i < THREAD_COUNT; i++) {
-        progress_bar[i] = 0;
-    }
+    thread progress;
+    if (DISPLAY_PROG) {
+        for (unsigned int i = 0; i < THREAD_COUNT; i++) {
+            progress_bar[i] = 0;
+        }
 
-    thread progress = thread(display_progress, ttn);
+        progress = thread(display_progress, ttn);
+    }
     _tprintf(TEXT("View 2 #%d#\n"), n);
 
 
@@ -574,8 +578,11 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
         delete[] outthreads;
     }
     delete[] linew;
-    if (progress.joinable())
-        progress.join();
+
+    if (DISPLAY_PROG) {
+        if (progress.joinable())
+            progress.join();
+    }
 
 }
 
@@ -662,7 +669,7 @@ void multi_enc_pthrd(int thrd) {
         }
         count += 1;
         n -= 64;
-        progress_bar[thrd] += 64;
+        if(DISPLAY_PROG) progress_bar[thrd] += 64;
     }
     #ifdef VERBOSE
     cout << "[calc] " << thrd << " unlocks " << endl;
@@ -779,9 +786,8 @@ int rd_inp(unsigned int argc, char** argv, string* infile) {
     int arg_c = 1;
     for (unsigned int i = 1; i < argc; i++) {
         if (argv[i][0] == '-') {
-            if (argv[i][1] == 's') {
-                ENABLE_SHA3_OUTPUT = 0;
-            }
+            if (argv[i][1] == 's')      ENABLE_SHA3_OUTPUT = 0;
+            else if (argv[i][1] == 'h') DISPLAY_PROG       = 0;
         }
         else {
             if (infile->empty()) {
