@@ -380,7 +380,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
 
     if (hFile == INVALID_HANDLE_VALUE)
     {
-        _tprintf(TEXT("Target file is %s\n"),
+        _tprintf(TEXT("Failure! Target file is %s\n"),
             lpcTheFile);
         return;
     }
@@ -462,7 +462,6 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
 
         progress = thread(display_progress, ttn);
     }
-    _tprintf(TEXT("View 2 #%d#\n"), n);
 
 
     set_thread_arg(np % THREAD_COUNT, (long long int)linew, tracker, n, 0, line, count, this);
@@ -527,7 +526,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
     err = fopen_s(&oufile,oufile_name.data(), "wb");
     if (err == 0)
     {
-        printf("The file 'crt_fopen_s.c' was opened\n");
+        
     }
     else
     {
@@ -536,7 +535,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
     err = fclose(oufile);
     if (err == 0)
     {
-        printf("The file 'crt_fopen_s.c' was closed\n");
+       
     }
     else
     {
@@ -545,7 +544,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
     err = fopen_s(&oufile,oufile_name.data(), "ab");
     if (err == 0)
     {
-        printf("The file 'crt_fopen_s.c' was opened\n");
+       
     }
     else
     {
@@ -562,7 +561,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
     err = fclose(oufile);
     if (err == 0)
     {
-        printf("The file 'crt_fopen_s.c' was closed\n");
+        
     }
     else
     {
@@ -782,12 +781,20 @@ string convertToString(char* a, int size)
     return s;
 }
 
+
+void set_config(char* inp) {
+    string a = inp;
+    for (unsigned int i = 0; i < a.size(); i++) {
+        if (a[i] == 's') ENABLE_SHA3_OUTPUT = 0;
+        else if (a[i] == 'h') DISPLAY_PROG = 0;
+    }
+}
+
 int rd_inp(unsigned int argc, char** argv, string* infile) {
     int arg_c = 1;
     for (unsigned int i = 1; i < argc; i++) {
         if (argv[i][0] == '-') {
-            if (argv[i][1] == 's')      ENABLE_SHA3_OUTPUT = 0;
-            else if (argv[i][1] == 'h') DISPLAY_PROG       = 0;
+            set_config(argv[i]);
         }
         else {
             if (infile->empty()) {
