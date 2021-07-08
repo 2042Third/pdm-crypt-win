@@ -62,6 +62,7 @@ private:
     unsigned long b3 = 0B01111001111000101010110100110010;
     unsigned long b4 = 0B01101011001001000110010101110100;
 };
+void display_progress(unsigned int n);
 int main_c(int argc, char** argv);
 void cmd_enc(std::string infile_name, std::string oufile_name, std::string text_nonce);
 #endif

@@ -10,6 +10,7 @@ author:     Yi Yang
 #include "pdm-service.hpp"
 #include <ostream>
 #include <wchar.h>
+#include <numeric>
 
 #ifdef DEEP_DEBUG
 #include <iomanip>
@@ -177,7 +178,6 @@ void multi_enc_pthrd(int thrd);
 void set_thread_arg(int thrd, long long int np, long long int tracker, long long int n, long long int tn, uint8_t* line, uint32_t count, Cc20* ptr);
 
 
-// string hashing = "00000000000000000000000000000000"; // A rolling hash of the the input data.
 
 const int BLOCK_SIZE = 4608000;
 /* Invariant: BLOCK_SIZE % 64 == 0
@@ -192,6 +192,8 @@ uint32_t folow[THREAD_COUNT][17]; // A copy of a state.
 
 // Statically allocates, and uses BLOCK_SIZE*THREAD_COUNT of memory. 
 char thread_track[THREAD_COUNT][BLOCK_SIZE] = { {0} };
+
+int progress_bar[THREAD_COUNT];
 
 long long int writing_track[THREAD_COUNT]; // Tells the writer thread how much to read; should only be different on the last block.
 
@@ -451,7 +453,11 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
     ttn -= 12;
     line = line + 12;
     #endif
+    for (unsigned int i = 0; i < THREAD_COUNT; i++) {
+        progress_bar[i] = 0;
+    }
 
+    thread progress = thread(display_progress, ttn);
     _tprintf(TEXT("View 2 #%d#\n"), n);
 
 
@@ -568,8 +574,29 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
         delete[] outthreads;
     }
     delete[] linew;
+    if (progress.joinable())
+        progress.join();
 
+}
 
+/**
+ * Displays progress
+ *
+ * */
+void display_progress(unsigned int n) {
+    unsigned int current = 0;
+    unsigned int acum = 0;
+    unsigned int res = 50;
+    cout << endl;
+    while (current < res) {
+        acum = 0;
+        if (((float)accumulate(progress_bar, progress_bar + THREAD_COUNT, acum) / n) * res >= current) {
+            current++;
+            cout << "-" << flush;
+        }
+        Sleep(10);
+    }
+    cout << "100%" << endl;
 }
 
 /*
@@ -635,6 +662,7 @@ void multi_enc_pthrd(int thrd) {
         }
         count += 1;
         n -= 64;
+        progress_bar[thrd] += 64;
     }
     #ifdef VERBOSE
     cout << "[calc] " << thrd << " unlocks " << endl;
