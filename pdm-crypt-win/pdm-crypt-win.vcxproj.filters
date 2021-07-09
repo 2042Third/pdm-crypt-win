@@ -24,6 +24,9 @@
     <ClCompile Include="pdm-crypt-win.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FileMapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cc20_multi.h">
@@ -33,6 +36,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="pdm-service.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pdm_dev.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="win_del.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FileMapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sha3_wrapper.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

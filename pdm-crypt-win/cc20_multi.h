@@ -39,7 +39,7 @@ public:
 
     // Make sure this number is same as THREAD_COUNT
     //           *
-    uint8_t nex[41][65];
+    uint8_t nex[31][65];
 
 
 private:
@@ -52,7 +52,7 @@ private:
 
     // Make sure this number is same as THREAD_COUNT
     //          *
-    uint32_t cy[41][17];
+    uint32_t cy[31][17];
 
     uint8_t* key;
 
@@ -62,7 +62,8 @@ private:
     unsigned long b3 = 0B01111001111000101010110100110010;
     unsigned long b4 = 0B01101011001001000110010101110100;
 };
-void display_progress(unsigned int n);
+void display_progress();
 int main_c(int argc, char** argv);
 void cmd_enc(std::string infile_name, std::string oufile_name, std::string text_nonce);
+void set_thread_arg(int thrd, char* linew1, long long int tracker, unsigned long long int n, long long int tn, uint8_t* line, uint32_t count, Cc20* ptr);
 #endif

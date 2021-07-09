@@ -73,6 +73,8 @@
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='decrypt|x64'">
     <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='encrypt|Win32'">
     <PlatformToolset>v142</PlatformToolset>
@@ -173,32 +175,46 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='decrypt|x64'">
     <ClCompile>
-      <AdditionalOptions>-D WINDOWS -D DEEP_DEBUG -pthread -std=c++17 -m64  -D DE %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-D WINDOWS -D DEEP_DEBUG   -D DE %(AdditionalOptions)</AdditionalOptions>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <ControlFlowGuard>false</ControlFlowGuard>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='encrypt|x64'">
     <ClCompile>
-      <AdditionalOptions>-D WINDOWS -D DEEP_DEBUG -pthread -std=c++17 -m64 %(AdditionalOptions)</AdditionalOptions>
-      <WarningLevel>Level3</WarningLevel>
+      <AdditionalOptions>-D WINDOWS -D DEEP_DEBUG %(AdditionalOptions)</AdditionalOptions>
+      <WarningLevel>Level1</WarningLevel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <ControlFlowGuard>Guard</ControlFlowGuard>
-      <CallingConvention>StdCall</CallingConvention>
+      <CallingConvention>Cdecl</CallingConvention>
       <Optimization>MaxSpeed</Optimization>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="cc20_multi.cpp">
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">-D WINDOWS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <ClCompile Include="FileMapper.cpp" />
     <ClCompile Include="pdm-crypt-win.cpp" />
     <ClCompile Include="sha3.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cc20_multi.h" />
+    <ClInclude Include="FileMapper.h" />
+    <ClInclude Include="sha3_wrapper.hpp" />
+    <ClInclude Include="pdm_dev.hpp" />
     <ClInclude Include="pdm-service.hpp" />
     <ClInclude Include="sha3.h" />
+    <ClInclude Include="win_del.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
