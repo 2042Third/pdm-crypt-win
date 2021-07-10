@@ -34,8 +34,12 @@ private:
     unsigned long long int BUFFSIZE;
     unsigned long long int ORIG_SIZE;
     int NO_MAPPING = 1;
-    unsigned long long int MAXI_PAGE = 183500800;
+    unsigned long long int MAXI_PAGE = 1835008000;
+    unsigned long long int MAXI_MEM = 2545957763;
     int multipler = 2600; 
+    int MEM_MAP = 1;
+    FILE* iFile;
+    char* nomap;
     //const unsigned long long int MAXI_PAGE = 247456000;//old
     //const unsigned long long int MAXI_PAGE = 183500800;
     //void Privilege(const wchar_t* pszPrivilege, BOOL bEnable);

@@ -47,18 +47,7 @@ int FileMapper::file_view_allocator( char** data) {
 
     if (debug_switch)printf("Mapping initial reading %lld\n",
         dwFileMapSize );
-    if (dwFileMapSize > MAXI_PAGE) {
-        std::cout<<"Writing more than once"<<std::endl;
-        
-        dwFileMapSize =  MAXI_PAGE;
-        REPEAT_WRITING = 1;
-        BUFFSIZE -= dwFileMapSize;
-    }
-    else {
-        REPEAT_WRITING = 0;
-    }
-    if (debug_switch)printf("buffsize left: %lld, file start:%lld, file size:%lld\n",
-        BUFFSIZE, dwFileMapStart, dwFileMapSize);
+    
     
     
     // The data of interest isn't at the beginning of the
@@ -81,7 +70,7 @@ int FileMapper::file_view_allocator( char** data) {
         FILE_MAP_READ, // read/write
         //0, 0, 0);
                              
-        dwFileMapStart>>32,                   // high-order 32
+        0,                   // high-order 32
                              // bits of file
                              // offset
         dwFileMapStart,      // low-order 32
@@ -92,7 +81,7 @@ int FileMapper::file_view_allocator( char** data) {
        
        
     
-    if (debug_switch) _tprintf(TEXT("The size of the read data is %lld, starting%lld\n"), dwFileMapSize, dwFileMapStart<<32>>32);
+    if (debug_switch) _tprintf(TEXT("The size of the read data is %lld, starting%lld\n"), dwFileMapSize, HIWORD(dwFileMapStart));
 
     if (lpMapAddress == NULL)
     {
