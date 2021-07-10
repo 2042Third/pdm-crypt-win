@@ -6,12 +6,14 @@
 class FileMapper 
 {
 public:
-    void file_init(unsigned long long int buffs, TCHAR* lpcTheFile,int db);
+    void file_init(long long int buffs, TCHAR* lpcTheFile,int db);
     size_t get_next_size();
     int REPEAT_WRITING = 0;
     int file_view_allocator( char** data);
     int close();
     int debug_switch = 0;
+    void mem_map(char**data);
+    void mem_cache(char**data);
 
 private:
     HANDLE hMapFile;      // handle for the file's memory-mapped region
@@ -31,18 +33,21 @@ private:
                       //shows up
     DWORDLONG FILE_MAP_START=0;
     TCHAR szName[10] = TEXT("LARGEPAGE");
-    unsigned long long int BUFFSIZE;
-    unsigned long long int ORIG_SIZE;
+    long long int BUFFSIZE;
+    long long int ORIG_SIZE;
     int NO_MAPPING = 1;
-    unsigned long long int MAXI_PAGE = 1835008000;
-    unsigned long long int MAXI_MEM = 2545957763;
+    //long long int MAXI_PAGE = 1835008000;
+    long long int MAXI_PAGE = 1835008000;
+    long long int MAXI_MEM = 2545957763;
+    int DATA_IS_READ = 0;
     int multipler = 2600; 
     int MEM_MAP = 1;
     FILE* iFile;
-    char* nomap;
-    //const unsigned long long int MAXI_PAGE = 247456000;//old
-    //const unsigned long long int MAXI_PAGE = 183500800;
-    //void Privilege(const wchar_t* pszPrivilege, BOOL bEnable);
+    char*nomap;
+    long long int mem_cache_start = 0;
+    long long int mem_cache_end = 1835008000;
+    //const long long int MAXI_PAGE = 247456000;//old
+    //const long long int MAXI_PAGE = 183500800;
 
 
 

@@ -46,7 +46,7 @@ private:
 
     uint8_t* nonce;
 
-    uint32_t count;
+    uint32_t count=0;
 
     uint8_t nonce_orig[13] = { 0 };
 

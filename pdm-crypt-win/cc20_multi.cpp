@@ -60,7 +60,14 @@ const int BLOCK_SIZE = 6912000;
 FileMapper fmpr;
 const int THREAD_COUNT = 30; // Make sure to change the header file's too.
 
-int FIRST_BACK_LOG = 1; // This is not enabled.
+/**
+When FIRST_BACK_LOG == 1, 
+    per block total size written to file is increased by 12 bytes, prepended onto the begining of the file.
+    per block total size read from file is decreased by 12 bytes, readings starts at offset 12-bytes into the file.
+
+
+*/
+int FIRST_BACK_LOG = 1; 
 
 uint32_t folow[THREAD_COUNT][17]; // A copy of a state.
 
@@ -154,12 +161,9 @@ void Cc20::one_block(int thrd, uint32_t count) {
 */
 
 void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
-    std::vector < uint8_t > content;
     unsigned long long int n = 0;
 
     struct _stat64 buf;
-    long long int fd;
-    unsigned long long int last_offset = 0;
     uint8_t* data;
     uint8_t* line;
 
@@ -172,7 +176,6 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
     errno_t err;
     FILE* oufile;
     
-    //Privilege(TEXT("SeLockMemoryPrivilege"), TRUE);
     if (!REPEAT_WRITING) {
         
         err = fopen_s(&oufile, oufile_name.data(), "wb");
@@ -212,7 +215,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
     thread hash_thread;
     thread progress;
 
-    if (DISPLAY_PROG && FIRST_BACK_LOG) {
+    if (DISPLAY_PROG ) {
         for (unsigned int i = 0; i < THREAD_COUNT; i++) {
             progress_bar[i] = 0;
         }
@@ -220,10 +223,11 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
         progress = thread(display_progress);
     }
     #ifdef DE
+    
     if (FIRST_BACK_LOG) {
         ttn -= 12;
         line = line + 12;
-        FIRST_BACK_LOG = 1;
+        //FIRST_BACK_LOG = 0;
     }
     #endif
 
@@ -303,9 +307,12 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
     }
     #ifndef DE
     //cout<<"nonce_orig: "<<this->nonce_orig <<endl;
-    fwrite(this->nonce_orig, sizeof(char), 12, oufile);
+    if(FIRST_BACK_LOG)fwrite(this->nonce_orig, sizeof(char), 12, oufile);
+    if (DEBUG_SWITCH_CC20) printf("Writing event happened, size %lld\n", 12);
     #endif
+
     fwrite(linew, sizeof(char), ttn, oufile);
+    if (DEBUG_SWITCH_CC20) printf("Writing event happened, size %lld\n", ttn);
     #ifdef DE
     hashing.add(linew,ttn);
     #endif
@@ -335,6 +342,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
         if (progress.joinable())
             progress.join();
     }
+    FIRST_BACK_LOG = 0;
     if (!fmpr.close()) { printf("Failed to close the files.\n"); }
     if (REPEAT_WRITING) {
         rd_file_encr(file_name, oufile_name);
@@ -395,11 +403,12 @@ void multi_enc_pthrd(int thrd) {
     //printf("[calc telmtr] %d tracker:%lld n:%lld linew1 addr:%lld\n",thrd,tracker,n,(unsigned long long int)linew1);
     #endif
     for (unsigned long long int k = 0; k < BLOCK_SIZE / 64; k++) {
-        ptr->one_block((int)thrd, (int)count);
+        ptr->one_block((int)thrd, (uint32_t)count);
         
         if (n >= 64) {
             for (unsigned int i = 0; i < 64; i++) {
                 linew1[i + tracker] = (char)(line[i + tracker] ^ ptr->nex[thrd][i]);
+                //linew1[i + tracker] = (char)(line[i + tracker]);// ^ ptr->nex[thrd][i]);
             }
 
             tracker += 64;
@@ -419,6 +428,7 @@ void multi_enc_pthrd(int thrd) {
         else {
             for (int i = 0; i < n; i++) {
                 linew1[i + tracker] = (char)(line[i + tracker] ^ ptr->nex[thrd][i]);
+                //linew1[i + tracker] = (char)(line[i + tracker]);//^ ptr->nex[thrd][i]);
             }
             tracker += n;
             writing_track[thrd] = tracker; // Notifies the writing tread when data can be read
