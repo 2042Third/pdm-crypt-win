@@ -5,11 +5,12 @@
 #include <stdio.h>
 #include <iostream>
 
-FileMapper::FileMapper(unsigned long long int buffs, TCHAR* lpcTheFile, int db) {
-    BUFFSIZE = buffs;
+void FileMapper::file_init(unsigned long long int buffs, TCHAR* lpcTheFile, int db) {
+    if(!REPEAT_WRITING)BUFFSIZE = buffs;
+    ORIG_SIZE = buffs;
     debug_switch = db;
     hFile = CreateFile(lpcTheFile,
-        GENERIC_WRITE | GENERIC_READ, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+         GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
     {
         _tprintf(TEXT("Failure! Target file is %s\n"),
@@ -17,6 +18,8 @@ FileMapper::FileMapper(unsigned long long int buffs, TCHAR* lpcTheFile, int db) 
         return;
     }
 }
+
+
 
 size_t FileMapper::get_next_size() {
     return dwFileMapSize;
@@ -30,6 +33,10 @@ int FileMapper::file_view_allocator( char** data) {
     if(debug_switch) _tprintf(TEXT("Able to reach file_view_allocator  \n"));
     GetSystemInfo(&SysInfo);
     dwSysGran = SysInfo.dwAllocationGranularity;
+    MAXI_PAGE = multipler * dwSysGran;
+    std::cout << "granularity: " << dwSysGran << std::endl;
+
+    dwFileMapStart = (FILE_MAP_START / dwSysGran) * dwSysGran;
 
     // Calculate the size of the file mapping view.
     dwMapViewSize = (FILE_MAP_START % dwSysGran) + BUFFSIZE;
@@ -38,34 +45,43 @@ int FileMapper::file_view_allocator( char** data) {
     // How large will the file mapping object be?
     dwFileMapSize = FILE_MAP_START + BUFFSIZE;
 
-    
+    if (debug_switch)printf("Mapping initial reading %lld\n",
+        dwFileMapSize );
     if (dwFileMapSize > MAXI_PAGE) {
         std::cout<<"Writing more than once"<<std::endl;
-        dwFileMapSize = MAXI_PAGE;
+        
+        dwFileMapSize =  MAXI_PAGE;
         REPEAT_WRITING = 1;
+        BUFFSIZE -= dwFileMapSize;
     }
+    else {
+        REPEAT_WRITING = 0;
+    }
+    if (debug_switch)printf("buffsize left: %lld, file start:%lld, file size:%lld\n",
+        BUFFSIZE, dwFileMapStart, dwFileMapSize);
+    
     
     // The data of interest isn't at the beginning of the
     // view, so determine how far into the view to set the pointer.
     iViewDelta = FILE_MAP_START - dwFileMapStart;
-
     hMapFile = CreateFileMapping(hFile,          // current file handle
         NULL,           // default security
-        PAGE_READWRITE , // read/write permission
-        dwFileMapSize << 32,              // size of mapping object, high
+        PAGE_READONLY , // read/write permission
+        0,              // size of mapping object, high
         dwFileMapSize,  // size of mapping object, low
-        szName);          // name of mapping object
+        NULL);          // name of mapping object
     if (hMapFile == NULL) {
         DisplayError(TEXT("CreateFileMapping"), GetLastError());
         return 0;
     }
     else
         if(debug_switch)_tprintf(TEXT("File mapping object successfully created, for start size %lld.\n"),dwFileMapStart);
-
     lpMapAddress = MapViewOfFile(hMapFile,            // handle to
                                                   // mapping object
         FILE_MAP_READ, // read/write
-        dwFileMapStart << 32,                   // high-order 32
+        //0, 0, 0);
+                             
+        dwFileMapStart>>32,                   // high-order 32
                              // bits of file
                              // offset
         dwFileMapStart,      // low-order 32
@@ -73,19 +89,20 @@ int FileMapper::file_view_allocator( char** data) {
                              // offset
         dwFileMapSize);      // number of bytes
                              // to map
-    if (REPEAT_WRITING) {
-        dwFileMapStart = dwFileMapSize;
-        dwFileMapSize = BUFFSIZE - dwFileMapSize;
-    }
-    if (debug_switch) _tprintf(TEXT("The size of the read data is %lld\n"), dwFileMapSize);
+       
+       
+    
+    if (debug_switch) _tprintf(TEXT("The size of the read data is %lld, starting%lld\n"), dwFileMapSize, dwFileMapStart<<32>>32);
 
     if (lpMapAddress == NULL)
     {
         _tprintf(TEXT("lpMapAddress is NULL: last error: %d\n"), GetLastError());
         return 0;
     }
-
-    *data = (char*)lpMapAddress;
-    if (debug_switch)_tprintf(TEXT("out: %s \n"), *data);
+    *data = (char*)lpMapAddress+iViewDelta;//+dwFileMapStart;
+    FILE_MAP_START = ORIG_SIZE- BUFFSIZE; // For next round, or doesn't matter if no next.
+            
+    
+    //if (debug_switch)_tprintf(TEXT("out: %s \n"), *data);
     return REPEAT_WRITING;
 }

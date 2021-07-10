@@ -18,6 +18,7 @@ author:     Yi Yang
 
 #include "pdm_dev.hpp"
 #include "FileMapper.h"
+
 #include "sha3_wrapper.hpp"
 #include "cc20_multi.h"
 // #include <condition_variable>
@@ -32,11 +33,13 @@ author:     Yi Yang
 
 #include <wchar.h>
 #include <Tchar.h>
+
 //#include <io.h>
 //#include <fcntl.h>
 
 
-
+//
+unsigned long long int thrd2_ = 0;
 
 using namespace std;
 // using boost::thread;
@@ -54,10 +57,10 @@ const int BLOCK_SIZE = 6912000;
 /* Invariant: BLOCK_SIZE % 64 == 0
                                  115200, 256000, 576000, 1152000,2304000,4608000,6912000,9216000 ...
                                  Block size*/
-
+FileMapper fmpr;
 const int THREAD_COUNT = 30; // Make sure to change the header file's too.
 
-const int PER_THREAD_BACK_LOG = 0; // This is not enabled.
+int FIRST_BACK_LOG = 1; // This is not enabled.
 
 uint32_t folow[THREAD_COUNT][17]; // A copy of a state.
 
@@ -166,37 +169,29 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
 
     _stat64(lpcTheFile,&buf);
     BUFFSIZE = buf.st_size;
-
-    
-    //Privilege(TEXT("SeLockMemoryPrivilege"), TRUE);
     errno_t err;
     FILE* oufile;
-    err = fopen_s(&oufile, oufile_name.data(), "wb");
-    if (err == 0)
-    {
-        //printf("The file 'crt_fopen_s.c' was opened\n");
-
-    }
-    else
-    {
-        printf("The file 'crt_fopen_s.c' was not opened\n");
-    }
-    err = fclose(oufile);
-    if (err == 0)
-    {
-       // printf("The file 'crt_fopen_s.c' was closed\n");
-
-    }
-    else
-    {
-        printf("The file 'crt_fopen_s.c' was not closed\n");
-    }
     
+    //Privilege(TEXT("SeLockMemoryPrivilege"), TRUE);
+    if (!REPEAT_WRITING) {
+        
+        err = fopen_s(&oufile, oufile_name.data(), "wb");
+        if (err == 0) {}
+        else {
+            printf("The file 'crt_fopen_s.c' was not opened\n");
+        }
+        err = fclose(oufile);
+        if (err == 0) {}
+        else {
+            printf("The file 'crt_fopen_s.c' was not closed\n");
+        }
+    }
 
-    FileMapper fmpr(BUFFSIZE, lpcTheFile, DEBUG_SWITCH_CC20);
-    fmpr.file_view_allocator((char**)&data); 
+    fmpr.file_init(BUFFSIZE, lpcTheFile, DEBUG_SWITCH_CC20);
+    REPEAT_WRITING = fmpr.file_view_allocator((char**)&data); 
+    BUFFSIZE = fmpr.get_next_size();
     if (DEBUG_SWITCH_CC20) {
-        _tprintf(TEXT("output line %s\n"), data);
+        _tprintf(TEXT("REPEAT_SWITCH: %d, BUFFSIZE:%lld\n"),REPEAT_WRITING, BUFFSIZE);
 
     }
     n = BUFFSIZE;
@@ -213,52 +208,45 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
     unsigned long long int tracker = 0;
     unsigned long long int np = 0, tmpn = np % THREAD_COUNT;
 
-    #ifdef DE
-    ttn -= 12;
-    line = line + 12;
-    #endif
+    
     thread hash_thread;
     thread progress;
 
-    if (DISPLAY_PROG) {
+    if (DISPLAY_PROG && FIRST_BACK_LOG) {
         for (unsigned int i = 0; i < THREAD_COUNT; i++) {
             progress_bar[i] = 0;
         }
 
         progress = thread(display_progress);
     }
+    #ifdef DE
+    if (FIRST_BACK_LOG) {
+        ttn -= 12;
+        line = line + 12;
+        FIRST_BACK_LOG = 1;
+    }
+    #endif
 
     #ifdef VERBOSE
-    printf(" [main] Before dispatching, remaining file % lld \n", n);
+    printf(" [main] Before dispatching, remaining file %lld, ttn:%lld \n", n,ttn);
     #endif
-    /**
-    if (ENABLE_SHA3_OUTPUT)
-    {
-        #ifndef DE
-        hashing.add(line + tn, BLOCK_SIZE);
-        #else 
-        hashing.add(linew + tn, BLOCK_SIZE);
-        #endif // DE
-    }
-    set_thread_arg(np % THREAD_COUNT, (char *)linew+0, tracker, n, 0, line+0, count, this);
-    threads[np % THREAD_COUNT] = thread(multi_enc_pthrd, np % THREAD_COUNT);
-    np++;
-    */
-    for (unsigned long long int k = 0; k < ((unsigned long long int)(ttn / 64) + 1); k++) { // If leak, try add -1
 
+    for (unsigned long long int k = 0; k < ((unsigned long long int)(ttn / 64) + 1); k++) { // If leak, try add -1
+        //cout << "OUT" << endl;
+        //printf("The n:%s\n",  line);
         if (n >= 64) {
             tracker += 64;
             if (tn % (BLOCK_SIZE) == 0 ) {
                 if (threads[np % THREAD_COUNT].joinable()) {
                     #ifdef VERBOSE
-                    cout << "[main] Possible join, waiting " << np % THREAD_COUNT << endl;
+                    cout << "[main] Possible join, waiting " << np % THREAD_COUNT << ". total dispatched "<<np<< endl;
                     #endif
                     threads[np % THREAD_COUNT].join();
                 }
                 if (ENABLE_SHA3_OUTPUT)
                 {
                     #ifndef DE
-                    //printf("The n:%lld, %c, %c\n",n,line[tn+1], line[tn+BLOCK_SIZE+1]);
+                    //printf("The n:%lld, %c, %c\n",n,line[tn], line[tn+1]);
                     if (n > BLOCK_SIZE)hashing.add(line + tn, BLOCK_SIZE);
                     else { 
                         //printf("The last:%lld, %c, %c\n", tn,line[tn+n-1],line[tn+n]);
@@ -277,25 +265,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
                 np++;
             }
         }
-        //else if(!last_thread_dispatched){
-        //    last_thread_dispatched = 1;
-        //    if (threads[np % THREAD_COUNT].joinable() && final_line_written != 1) {
-        //        #ifdef VERBOSE
-        //        cout << "[main] Last Possible join, waiting " << np % THREAD_COUNT << endl;
-        //        #endif
-        //        threads[np % THREAD_COUNT].join();
-        //    }
-        //    if (ENABLE_SHA3_OUTPUT)
-        //    {
-        //        #ifndef DE
-        //        hashing.add(line + tn, tn%BLOCK_SIZE);
-        //        #else 
-        //        hashing.add(linew+tn, tn%BLOCK_SIZE);
-        //        #endif // DE
-        //    }
-        //    set_thread_arg(np % THREAD_COUNT, (char*)linew + tn, tracker, n, tn, (uint8_t*)line + tn, count + 1, this);
-        //    threads[np % THREAD_COUNT] = thread(multi_enc_pthrd, np % THREAD_COUNT);
-        //}
+
         count += 1;
         n -= 64;
         tn += 64;
@@ -332,7 +302,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
         printf("The file 'crt_fopen_s.c' was not opened\n");
     }
     #ifndef DE
-    // cout<<"nonce_orig: "<<this->nonce_orig <<endl;
+    //cout<<"nonce_orig: "<<this->nonce_orig <<endl;
     fwrite(this->nonce_orig, sizeof(char), 12, oufile);
     #endif
     fwrite(linew, sizeof(char), ttn, oufile);
@@ -366,7 +336,9 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
             progress.join();
     }
     if (!fmpr.close()) { printf("Failed to close the files.\n"); }
-
+    if (REPEAT_WRITING) {
+        rd_file_encr(file_name, oufile_name);
+    }
 }
 
 
@@ -390,7 +362,7 @@ void display_progress() {
         }
         Sleep(10);
     }
-    cout << "100%" << endl;
+    if(!REPEAT_WRITING)cout << "100%" << endl;
 }
 
 /*
@@ -417,8 +389,9 @@ void multi_enc_pthrd(int thrd) {
     uint32_t count = arg_count[thrd]; // Used 
     Cc20* ptr = arg_ptr[thrd];
 
+    if (thrd == 0)thrd2_++;
     #ifdef VERBOSE
-    cout <<"[calc] " << thrd << " locks, starting write " << endl;
+    cout <<"[calc] " << thrd << " locks, starting write "<<n << endl;
     //printf("[calc telmtr] %d tracker:%lld n:%lld linew1 addr:%lld\n",thrd,tracker,n,(unsigned long long int)linew1);
     #endif
     for (unsigned long long int k = 0; k < BLOCK_SIZE / 64; k++) {
@@ -432,7 +405,7 @@ void multi_enc_pthrd(int thrd) {
             tracker += 64;
 
             #ifdef VERBOSE
-            //if (thrd == 0 && tracker> 2087150) cout << "THREAD 0'S TRACKER " << tracker << " current tracker=" << line[tracker+1] << " stack BLOCK_SIZE=" << BLOCK_SIZE << endl;
+            //if (thrd ==0  && thrd2_>=0 ) cout << "THREAD 2'S TRACKER " << tracker << " current tracker=" << linew1[tracker ] << " stack BLOCK_SIZE=" << BLOCK_SIZE << endl;
             #endif
             if (tracker >= (BLOCK_SIZE)) { // Notifies the writing tread when data can be read
                 #ifdef VERBOSE

@@ -6,7 +6,7 @@
 class FileMapper 
 {
 public:
-    FileMapper(unsigned long long int buffs, TCHAR* lpcTheFile,int db);
+    void file_init(unsigned long long int buffs, TCHAR* lpcTheFile,int db);
     size_t get_next_size();
     int REPEAT_WRITING = 0;
     int file_view_allocator( char** data);
@@ -32,8 +32,13 @@ private:
     DWORDLONG FILE_MAP_START=0;
     TCHAR szName[10] = TEXT("LARGEPAGE");
     unsigned long long int BUFFSIZE;
+    unsigned long long int ORIG_SIZE;
     int NO_MAPPING = 1;
-    const unsigned long long int MAXI_PAGE = 2097152000;
+    unsigned long long int MAXI_PAGE = 183500800;
+    int multipler = 2600; 
+    //const unsigned long long int MAXI_PAGE = 247456000;//old
+    //const unsigned long long int MAXI_PAGE = 183500800;
+    //void Privilege(const wchar_t* pszPrivilege, BOOL bEnable);
 
 
 
