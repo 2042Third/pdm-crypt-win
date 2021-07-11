@@ -353,7 +353,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
             progress.join();
     }
     if (!fmpr.close()) { printf("Failed to close the files.\n"); }
-    if (REPEAT_WRITING) { 
+    if (REPEAT_WRITING) {  
         rd_file_encr(file_name, oufile_name);
     }
 }
