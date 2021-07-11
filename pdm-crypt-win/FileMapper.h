@@ -9,11 +9,11 @@ public:
     void file_init(long long int buffs, TCHAR* lpcTheFile,int db);
     size_t get_next_size();
     int REPEAT_WRITING = 0;
-    int file_view_allocator( char** data);
+    int file_view_allocator( char** data,int decry);
     int close();
     int debug_switch = 0;
     void mem_map(char**data);
-    void mem_cache(char**data);
+    void mem_cache(char**data,int decry);
 
 private:
     HANDLE hMapFile;      // handle for the file's memory-mapped region

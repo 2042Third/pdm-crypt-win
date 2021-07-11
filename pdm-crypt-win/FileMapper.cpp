@@ -44,7 +44,7 @@ int FileMapper::close() {
     }
 }
 
-int FileMapper::file_view_allocator( char** data) {
+int FileMapper::file_view_allocator( char** data,int decry) {
     if(debug_switch) _tprintf(TEXT("Able to reach file_view_allocator  \n"));
     GetSystemInfo(&SysInfo);
     dwSysGran = SysInfo.dwAllocationGranularity;
@@ -62,9 +62,14 @@ int FileMapper::file_view_allocator( char** data) {
     if (debug_switch)printf("Mapping initial reading %lld\n",
         dwFileMapSize );
     
+    if (!DATA_IS_READ && decry){
+        BUFFSIZE -= 12;
+        mem_cache_start = 12;
+
+    }
     if(MEM_MAP)mem_map(data);
     else {
-        mem_cache(data);
+        mem_cache(data,decry);
     }
     //if (debug_switch)_tprintf(TEXT("out: %s \n"), *data);
 
@@ -72,7 +77,7 @@ int FileMapper::file_view_allocator( char** data) {
     return REPEAT_WRITING;
 }
 
-void FileMapper::mem_cache(char** data) {
+void FileMapper::mem_cache(char** data,int decry ) {
     if (debug_switch) printf("mem_cache triggered, leaving size %lld\n",BUFFSIZE);
     if (BUFFSIZE < mem_cache_end) mem_cache_end = BUFFSIZE;
     if (_fseeki64(iFile, mem_cache_start, SEEK_SET) != 0) {

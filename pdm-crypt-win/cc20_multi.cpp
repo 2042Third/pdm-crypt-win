@@ -43,6 +43,11 @@ unsigned long long int thrd2_ = 0;
 
 using namespace std;
 // using boost::thread;
+#ifdef DE 
+int DECRY = 1;
+#else
+int DECRY = 0;
+#endif
 
 int ENABLE_SHA3_OUTPUT = 1; // Enables sha3 output
 
@@ -191,7 +196,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
     }
 
     fmpr.file_init(BUFFSIZE, lpcTheFile, DEBUG_SWITCH_CC20);
-    REPEAT_WRITING = fmpr.file_view_allocator((char**)&data); 
+    REPEAT_WRITING = fmpr.file_view_allocator((char**)&data,DECRY); 
     BUFFSIZE = fmpr.get_next_size();
     if (DEBUG_SWITCH_CC20) {
         _tprintf(TEXT("REPEAT_SWITCH: %d, BUFFSIZE:%lld\n"),REPEAT_WRITING, BUFFSIZE);
@@ -204,7 +209,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
     
     unsigned long long int tn = 0;
     unsigned long long int ttn = n;
-    uint32_t count = 0;
+    //uint32_t count = 0;
     for (unsigned long long int i = 0; i < THREAD_COUNT; i++) {
         writing_track[i] = 0;
     }
@@ -222,10 +227,12 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
 
         progress = thread(display_progress);
     }
-    #ifdef DE
+    #ifdef DEahskdhaskjdhk
     
     if (FIRST_BACK_LOG) {
         ttn -= 12;
+        n -= 12;
+        BUFFSIZE -= 12;
         line = line + 12;
         //FIRST_BACK_LOG = 0;
     }
@@ -241,6 +248,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
         if (n >= 64) {
             tracker += 64;
             if (tn % (BLOCK_SIZE) == 0 ) {
+                cout << "num " << count << " ok " << tn << " no " << n << endl;
                 if (threads[np % THREAD_COUNT].joinable()) {
                     #ifdef VERBOSE
                     cout << "[main] Possible join, waiting " << np % THREAD_COUNT << ". total dispatched "<<np<< endl;
@@ -260,6 +268,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
                     
                     #endif // DE
                 }
+                if (DEBUG_SWITCH_CC20)cout << count + 1 << " is the counter" << endl;
                 set_thread_arg(np % THREAD_COUNT, (char*)linew + tn, tracker, n, tn, line + tn, count + 1, this);
                 threads[np % THREAD_COUNT] = thread(multi_enc_pthrd, np % THREAD_COUNT);
                 #ifdef VERBOSE
@@ -337,12 +346,12 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
         delete[] outthreads;
     }
     delete[] linew;
-
+    if (DEBUG_SWITCH_CC20) cout << hashing.getHash() << endl;
+    FIRST_BACK_LOG = 0;
     if (DISPLAY_PROG) {
         if (progress.joinable())
             progress.join();
     }
-    FIRST_BACK_LOG = 0;
     if (!fmpr.close()) { printf("Failed to close the files.\n"); }
     if (REPEAT_WRITING) {
         rd_file_encr(file_name, oufile_name);
@@ -428,7 +437,7 @@ void multi_enc_pthrd(int thrd) {
         else {
             for (int i = 0; i < n; i++) {
                 linew1[i + tracker] = (char)(line[i + tracker] ^ ptr->nex[thrd][i]);
-                //linew1[i + tracker] = (char)(line[i + tracker]);//^ ptr->nex[thrd][i]);
+               // linew1[i + tracker] = (char)(line[i + tracker]);//^ ptr->nex[thrd][i]);
             }
             tracker += n;
             writing_track[thrd] = tracker; // Notifies the writing tread when data can be read
