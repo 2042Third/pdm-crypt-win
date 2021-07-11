@@ -227,9 +227,9 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
 
         progress = thread(display_progress);
     }
-    #ifdef DEahskdhaskjdhk
+    #ifdef DE
     
-    if (FIRST_BACK_LOG) {
+    if (FIRST_BACK_LOG&& !REPEAT_WRITING) {
         ttn -= 12;
         n -= 12;
         BUFFSIZE -= 12;
@@ -248,7 +248,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
         if (n >= 64) {
             tracker += 64;
             if (tn % (BLOCK_SIZE) == 0 ) {
-                cout << "num " << count << " ok " << tn << " no " << n << endl;
+                //cout << "num " << count << " ok " << tn << " no " << n << endl;
                 if (threads[np % THREAD_COUNT].joinable()) {
                     #ifdef VERBOSE
                     cout << "[main] Possible join, waiting " << np % THREAD_COUNT << ". total dispatched "<<np<< endl;
@@ -323,7 +323,7 @@ void Cc20::rd_file_encr(const std::string file_name, string oufile_name) {
     fwrite(linew, sizeof(char), ttn, oufile);
     if (DEBUG_SWITCH_CC20) printf("Writing event happened, size %lld\n", ttn);
     #ifdef DE
-    hashing.add(linew,ttn);
+    if(ENABLE_SHA3_OUTPUT)hashing.add(linew,ttn);
     #endif
     err = fclose(oufile);
     if (err == 0)

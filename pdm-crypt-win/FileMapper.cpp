@@ -10,8 +10,8 @@ void FileMapper::file_init(    long long int buffs, TCHAR* lpcTheFile, int db) {
     ORIG_SIZE = buffs;
     debug_switch = db;
     
-    //if (buffs > MAXI_MEM && !DATA_IS_READ) {
-    if ( buffs > 1 && !DATA_IS_READ) {
+    if (buffs > MAXI_MEM && !DATA_IS_READ) {
+    //if ( buffs > 1 && !DATA_IS_READ) {
         MEM_MAP=0;
     }
     else if(!DATA_IS_READ && MEM_MAP) {
