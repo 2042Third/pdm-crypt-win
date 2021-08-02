@@ -151,7 +151,7 @@ void Cc20::one_block(int thrd, uint32_t count) {
     for (unsigned int i = 0; i < 10; i++) tworounds(folow[thrd]); // 20 rounds
     #endif
     set_conc(cy[thrd], folow[thrd], 16);
-    endicha(this->nex[thrd], folow[thrd]);
+    endicha(this->nex[thrd],  cy[thrd]);
 }
 
 

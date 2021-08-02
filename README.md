@@ -6,6 +6,15 @@ This a commandl line encryption tool for windows, for linux or macOS version ple
 <h2>CURRENT STATUS:</h2>
 enabled sha3 checking<br />
 using stl thread (boost also avaliable)<br />
+<h2>update 8/2/2021: </h2>
+<dl>
+<dt>Added features</dt>
+<dd>General memory saftey improved. I have being doing crypto-analysis on this implementation, and found a few areas of improvements; including random number generation upgrades, stack allocation improvements, and so on.</dd>
+<dd>MacOs clang compatibility, testing to see if clang can be applied to other versions</dd>
+<dt>Fixes</dt>
+  <dd>Encryption on the same file yield 100% different results, or operation-to-operation random nonce is up-to standards</dd>
+  <dd>Numerous memory fixes</dd>
+</dl>
 <h2>updated 7/7/2021: </h2>
 <dl>
 <dt>Added features</dt>

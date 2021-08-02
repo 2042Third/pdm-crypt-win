@@ -45,12 +45,12 @@ void stream(uint8_t* key, uint8_t* nonce, uint32_t count, uint8_t* plain, unsign
 // INT should only be unsigned, no checks here.
 template <typename NT>
 void roln(NT& val, unsigned int n) {
-    val = (val << n) | (val >> (8 - n));
+    val = (val << n) | (val >> (32 - n));
 }
 
 template <>
 void roln<uint32_t>(uint32_t& val, unsigned int n) {
-    val = (val << n) | (val >> (8 - n));
+    val = (val << n) | (val >> (32 - n));
 }
 
 void endicha(uint8_t* a, uint32_t* b) {
